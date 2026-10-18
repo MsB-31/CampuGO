@@ -36,6 +36,8 @@ public partial class MainPage : ContentPage
 		{
 			case "Explorer": BuildExplorePage(); break;
 			case "Agenda": BuildAgendaPage(); break;
+			case "Alertes": BuildAlertsPage(); break;
+			case "Profil": BuildProfilePage(); break;
 			default: BuildHomePage(); break;
 		}
 

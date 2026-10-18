@@ -29,5 +29,13 @@ public static class CampusData
 		("18:30", "Soirée culturelle étudiante", "Cité SIC · Bassa", "CULTURE")
 	};
 
+	// Alertes : (catégorie, titre, message, horodatage, urgent).
+	public static readonly (string Category, string Title, string Message, string Time, bool Urgent)[] Alerts =
+	{
+		("INFO CAMPUS", "Horaires de la bibliothèque", "La bibliothèque de l’ENSPD ferme à 18:00 aujourd’hui.", "Il y a 12 min", false),
+		("VIE ÉTUDIANTE", "Forum des associations", "Rendez-vous à l’esplanade de l’ENSPD, à Logbessou, jeudi à partir de midi.", "Aujourd’hui · 09:42", false),
+		("DÉPLACEMENTS", "Trajets vers Logbessou", "Prévois une marge supplémentaire aux heures de pointe : la circulation est dense autour de Douala.", "Hier · 18:10", true)
+	};
+
 	public static readonly string[] ExploreFilters = { "Tout", "Activités", "Services", "Restauration" };
 }
