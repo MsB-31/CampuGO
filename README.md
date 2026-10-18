@@ -227,3 +227,8 @@ Les messages de commit utilisent les préfixes `phase-a:`, `phase-b:`, `phase-c:
 ## Auteur
 
 Mbaïammadji Sylvestre Banyo ([@MsB-31](https://github.com/MsB-31)) — École Nationale Supérieure Polytechnique de Douala (ENSPD), Université de Douala.
+
+- Portfolio : [mbaiammadji-sylvestre-banyo.netlify.app](https://mbaiammadji-sylvestre-banyo.netlify.app/)
+- LinkedIn : [mbaiammadji-sylvestre-banyo](https://www.linkedin.com/in/mbaiammadji-sylvestre-banyo)
+- GitHub : [@MsB-31](https://github.com/MsB-31)
+
