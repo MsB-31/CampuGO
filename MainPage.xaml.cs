@@ -18,6 +18,7 @@ public partial class MainPage : ContentPage
 	private string _activeTab = "Accueil";
 	private string _selectedFilter = "Tout";
 	private string _searchQuery = string.Empty;
+	private UserProfile? _profile = UserProfile.Load();
 
 	public MainPage()
 	{
@@ -98,7 +99,7 @@ public partial class MainPage : ContentPage
 			BackgroundColor = Colors.Transparent,
 			Padding = new Thickness(8, 4),
 			MinimumHeightRequest = 44,
-			IsVisible = _activeTab != "Inscription",
+			IsVisible = _profile is null && _activeTab != "Inscription",
 			Command = new Command(() => ShowTab("Inscription"))
 		};
 		var row = new Grid

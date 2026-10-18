@@ -147,8 +147,20 @@ public partial class MainPage
 				}
 
 				summary.Text = string.Empty;
-				await DisplayAlertAsync("Compte créé", $"Bienvenue sur CampuGO, {name.Text!.Trim()} !", "Continuer");
-				ShowTab("Accueil");
+				var selectedInstitution = CampusData.Institutions[institution.SelectedIndex];
+				_profile = new UserProfile
+				{
+					FullName = name.Text!.Trim(),
+					Email = email.Text!.Trim().ToLowerInvariant(),
+					Phone = FormatPhone(NormalizePhone(phone.Text)),
+					Institution = selectedInstitution.Label,
+					Track = selectedInstitution.Tracks[track.SelectedIndex],
+					Level = CampusData.Levels[level.SelectedIndex],
+					Campus = CampusData.Campuses[campus.SelectedIndex]
+				};
+				_profile.Save();
+				await DisplayAlertAsync("Compte créé", $"Bienvenue sur CampuGO, {_profile.FullName} !", "Continuer");
+				ShowTab("Profil");
 			})
 		};
 		PageContent.Children.Add(summary);

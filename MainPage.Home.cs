@@ -10,12 +10,13 @@ public partial class MainPage
 			Spacing = 5,
 			Children =
 			{
-				Text("Bienvenue sur CampuGO", 25, PrimaryText, true),
-				Text("Ton campus de Douala t’attend.", 14, SecondaryText)
+				Text(_profile is null ? "Bienvenue sur CampuGO" : $"Bonjour, {_profile.FullName}", 25, PrimaryText, true),
+				Text(_profile is null ? "Ton campus de Douala t’attend." : $"{_profile.Institution} · {_profile.Campus}", 14, SecondaryText)
 			}
 		});
 		PageContent.Children.Add(CreateHero());
-		PageContent.Children.Add(ActionButton("Créer mon compte étudiant", () => ShowTab("Inscription"), false));
+		if (_profile is null)
+			PageContent.Children.Add(ActionButton("Créer mon compte étudiant", () => ShowTab("Inscription"), false));
 		PageContent.Children.Add(Section("Pour toi", "Tout voir", () => ShowTab("Explorer")));
 		PageContent.Children.Add(CreateShortcuts());
 		PageContent.Children.Add(Section("À ne pas manquer", "L’agenda", () => ShowTab("Agenda")));
