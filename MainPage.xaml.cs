@@ -34,6 +34,8 @@ public partial class MainPage : ContentPage
 
 		switch (tab)
 		{
+			case "Explorer": BuildExplorePage(); break;
+			case "Agenda": BuildAgendaPage(); break;
 			default: BuildHomePage(); break;
 		}
 
