@@ -1,0 +1,9 @@
+# Normalise les fins de ligne (le dépôt stocke du LF, Windows et Linux restent cohérents)
+* text=auto
+
+# Fichiers binaires
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ttf binary
+*.apk binary
