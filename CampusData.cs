@@ -1,5 +1,8 @@
 ﻿namespace CampuGO;
 
+/// <summary>Un établissement de l'Université de Douala, avec son campus par défaut et ses filières.</summary>
+public sealed record Institution(string Label, string DefaultCampus, string[] Tracks);
+
 /// <summary>
 /// Toutes les données d'exemple liées au contexte camerounais (Université de Douala, ENSPD).
 /// Pour adapter l'application, il suffit de modifier ce fichier.
@@ -8,6 +11,65 @@ public static class CampusData
 {
 	public const string City = "Douala";
 	public const string University = "Université de Douala";
+
+	public const string CampusBassa = "Campus de Bassa (Cité SIC)";
+	public const string CampusNdogbong = "Campus de Ndogbong";
+	public const string CampusLogbessou = "Campus de Logbessou";
+	public const string CampusAkwa = "Campus d’Akwa";
+	public const string OtherCampus = "Autre campus";
+
+	public static readonly string[] Campuses =
+	{
+		CampusBassa, CampusNdogbong, CampusLogbessou, CampusAkwa, OtherCampus
+	};
+
+	public static readonly string[] Levels =
+	{
+		"1re année", "2e année", "3e année", "4e année", "5e année", "Doctorat"
+	};
+
+	public static readonly Institution[] Institutions =
+	{
+		new("ENSPD (Polytechnique de Douala)", CampusLogbessou, new[]
+		{
+			"Génie Informatique et Télécommunications", "Génie Civil", "Génie Électrique",
+			"Génie Industriel", "Génie Mécanique", "Autre filière"
+		}),
+		new("IUT de Douala", CampusNdogbong, new[]
+		{
+			"Génie Informatique", "Génie Électrique", "Gestion", "Autre filière"
+		}),
+		new("ENSET de Douala", CampusNdogbong, new[]
+		{
+			"Génie Informatique", "Génie Électrique", "Génie Mécanique", "Autre filière"
+		}),
+		new("ESSEC de Douala", CampusBassa, new[]
+		{
+			"Comptabilité", "Marketing", "Gestion", "Autre filière"
+		}),
+		new("FSEGA", CampusBassa, new[]
+		{
+			"Sciences économiques", "Gestion", "Comptabilité", "Autre filière"
+		}),
+		new("Faculté des Sciences (FS)", CampusLogbessou, new[]
+		{
+			"Mathématiques", "Informatique", "Physique", "Chimie", "Biologie", "Autre filière"
+		}),
+		new("FMSP (Médecine et Pharmacie)", CampusLogbessou, new[]
+		{
+			"Médecine", "Pharmacie", "Autre filière"
+		}),
+		new("FLSH (Lettres et Sciences Humaines)", CampusBassa, new[]
+		{
+			"Lettres", "Histoire", "Géographie", "Autre filière"
+		}),
+		new("Autre établissement", OtherCampus, new[] { "Autre filière" })
+	};
+
+	public static readonly string[] InstitutionLabels = Institutions.Select(i => i.Label).ToArray();
+
+	public static Institution? FindInstitution(string label) =>
+		Institutions.FirstOrDefault(i => i.Label == label);
 
 	// Lieux affichés dans l'onglet « Explorer » : (catégorie, titre, détail, icône).
 	public static readonly (string Category, string Title, string Detail, string Icon)[] Places =

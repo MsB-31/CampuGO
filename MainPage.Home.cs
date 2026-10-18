@@ -15,6 +15,7 @@ public partial class MainPage
 			}
 		});
 		PageContent.Children.Add(CreateHero());
+		PageContent.Children.Add(ActionButton("Créer mon compte étudiant", () => ShowTab("Inscription"), false));
 		PageContent.Children.Add(Section("Pour toi", "Tout voir", () => ShowTab("Explorer")));
 		PageContent.Children.Add(CreateShortcuts());
 		PageContent.Children.Add(Section("À ne pas manquer", "L’agenda", () => ShowTab("Agenda")));

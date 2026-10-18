@@ -38,6 +38,7 @@ public partial class MainPage : ContentPage
 			case "Agenda": BuildAgendaPage(); break;
 			case "Alertes": BuildAlertsPage(); break;
 			case "Profil": BuildProfilePage(); break;
+			case "Inscription": BuildSignupPage(); break;
 			default: BuildHomePage(); break;
 		}
 
@@ -88,12 +89,25 @@ public partial class MainPage : ContentPage
 			Command = new Command(() => ShowTab("Alertes"))
 		};
 		AutomationProperties.SetName(notifications, "Ouvrir les alertes");
+		var signup = new Button
+		{
+			Text = "Inscription",
+			FontSize = 12,
+			FontFamily = "OpenSansSemibold",
+			TextColor = Teal,
+			BackgroundColor = Colors.Transparent,
+			Padding = new Thickness(8, 4),
+			MinimumHeightRequest = 44,
+			IsVisible = _activeTab != "Inscription",
+			Command = new Command(() => ShowTab("Inscription"))
+		};
 		var row = new Grid
 		{
-			ColumnDefinitions = { new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto) },
-			Children = { brand, notifications }
+			ColumnDefinitions = { new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto), new ColumnDefinition(GridLength.Auto) },
+			Children = { brand, signup, notifications }
 		};
-		Grid.SetColumn(notifications, 1);
+		Grid.SetColumn(signup, 1);
+		Grid.SetColumn(notifications, 2);
 		return row;
 	}
 

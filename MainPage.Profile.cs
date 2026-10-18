@@ -8,6 +8,7 @@ public partial class MainPage
 		PageContent.Children.Add(PageTitle("Mon profil", "Ton espace personnel CampuGO."));
 
 		PageContent.Children.Add(InfoCard("◉", "Compte étudiant", "Université de Douala · ENSPD"));
+		PageContent.Children.Add(ActionButton("Créer mon compte étudiant", () => ShowTab("Inscription"), true));
 
 		PageContent.Children.Add(Section("Mon espace", "", () => { }));
 		PageContent.Children.Add(ProfileRow("▦", "Mes événements", "Retrouver tes prochaines sorties", () => ShowTab("Agenda")));
