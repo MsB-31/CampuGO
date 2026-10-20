@@ -1,59 +1,108 @@
-﻿namespace CampuGO;
+﻿using Microsoft.Maui.Controls.Shapes;
+
+namespace CampuGO;
 
 public partial class MainPage
 {
-	private void BuildExplorePage()
+	private void BuildExplore()
 	{
-		PageContent.Children.Add(CreateHeader());
-		PageContent.Children.Add(PageTitle("Explorer", "Tout ce qui fait vivre ton campus."));
-		var search = new Entry
+		var entry = new Entry
 		{
-			Placeholder = "Un lieu, une activité, un service…", PlaceholderColor = MutedText,
-			TextColor = PrimaryText, BackgroundColor = Surface, FontSize = 15, HeightRequest = 52,
-			ClearButtonVisibility = ClearButtonVisibility.WhileEditing
+			Placeholder = "Rechercher un lieu ou un service",
+			PlaceholderColor = Theme.TextMuted,
+			TextColor = Theme.TextPrimary,
+			FontFamily = Theme.Regular,
+			FontSize = 15,
+			BackgroundColor = Colors.Transparent,
+			Text = _exploreQuery,
+			ClearButtonVisibility = ClearButtonVisibility.WhileEditing,
+			VerticalOptions = LayoutOptions.Center
 		};
-		search.TextChanged += (_, args) => { _searchQuery = args.NewTextValue ?? string.Empty; UpdateExploreResults(); };
-		PageContent.Children.Add(Frame(search, 12));
 
-		var filters = new HorizontalStackLayout { Spacing = 8 };
+		var searchRow = new Grid
+		{
+			ColumnSpacing = 10,
+			ColumnDefinitions = { new ColumnDefinition(GridLength.Auto), new ColumnDefinition(GridLength.Star) },
+			Children = { IconView(Icons.Search, Theme.TextMuted, 20), entry }
+		};
+		Grid.SetColumn(entry, 1);
+
+		var searchBox = new Border
+		{
+			BackgroundColor = Theme.Surface,
+			Stroke = Theme.Border,
+			StrokeThickness = 1,
+			StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(Theme.RadiusControl) },
+			Padding = new Thickness(12, 0),
+			HeightRequest = 48,
+			Content = searchRow
+		};
+
+		var results = new VerticalStackLayout { Spacing = 0 };
+		var chips = new List<(Button Button, string Filter)>();
+
+		void Refresh()
+		{
+			foreach (var (button, filter) in chips)
+			{
+				var selected = filter == _exploreFilter;
+				button.BackgroundColor = selected ? Theme.Accent : Theme.Surface;
+				button.TextColor = selected ? Theme.OnAccent : Theme.TextSecondary;
+				button.BorderColor = selected ? Theme.Accent : Theme.Border;
+			}
+
+			results.Children.Clear();
+			var matches = CampusData.Places.Where(place =>
+				(_exploreFilter == "Tout" || place.Category == _exploreFilter) &&
+				(string.IsNullOrWhiteSpace(_exploreQuery) ||
+					place.Title.Contains(_exploreQuery, StringComparison.OrdinalIgnoreCase) ||
+					place.Detail.Contains(_exploreQuery, StringComparison.OrdinalIgnoreCase))).ToList();
+
+			if (matches.Count == 0)
+			{
+				results.Children.Add(Text("Aucun résultat pour cette recherche.", 14, Theme.TextSecondary));
+				return;
+			}
+
+			results.Children.Add(ListCard(matches.Select(place => PlaceRow(place))));
+		}
+
+		var chipRow = new HorizontalStackLayout { Spacing = 8 };
 		foreach (var filter in CampusData.ExploreFilters)
 		{
-			filters.Children.Add(new Button
+			var value = filter;
+			var chip = new Button
 			{
-				Text = filter, FontSize = 12, FontFamily = "OpenSansSemibold",
-				TextColor = filter == _selectedFilter ? OnTeal : SecondaryText,
-				BackgroundColor = filter == _selectedFilter ? Teal : Surface,
-				CornerRadius = 16, Padding = new Thickness(13, 8), MinimumHeightRequest = 38,
-				Command = new Command(() => { _selectedFilter = filter; ShowTab("Explorer"); })
-			});
+				Text = filter,
+				FontSize = 13,
+				FontFamily = Theme.SemiBold,
+				CornerRadius = 18,
+				HeightRequest = 36,
+				Padding = new Thickness(16, 0),
+				BorderWidth = 1
+			};
+			chip.Clicked += (_, _) => { _exploreFilter = value; Refresh(); };
+			chips.Add((chip, filter));
+			chipRow.Children.Add(chip);
 		}
-		PageContent.Children.Add(new ScrollView { Orientation = ScrollOrientation.Horizontal, Content = filters });
-		PageContent.Children.Add(Text("À DÉCOUVRIR", 11, SecondaryText, true));
-		var results = new VerticalStackLayout { Spacing = 12, AutomationId = "ExploreResults" };
-		PageContent.Children.Add(results);
-		FillExploreResults(results);
-	}
 
-	private void UpdateExploreResults()
-	{
-		var results = PageContent.Children.OfType<VerticalStackLayout>().FirstOrDefault(view => view.AutomationId == "ExploreResults");
-		if (results is not null) FillExploreResults(results);
-	}
+		entry.TextChanged += (_, args) => { _exploreQuery = args.NewTextValue ?? string.Empty; Refresh(); };
 
-	private void FillExploreResults(VerticalStackLayout results)
-	{
-		results.Children.Clear();
-		var matches = CampusData.Places.Where(place =>
-			(_selectedFilter == "Tout" || place.Category == _selectedFilter) &&
-			(string.IsNullOrWhiteSpace(_searchQuery) ||
-				place.Title.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ||
-				place.Detail.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase))).ToArray();
-		if (matches.Length == 0)
+		PageContent.Children.Add(new VerticalStackLayout
 		{
-			results.Children.Add(Text("Aucun résultat. Essaie un autre mot-clé.", 14, SecondaryText));
-			return;
-		}
-		foreach (var place in matches)
-			results.Children.Add(InfoCard(place.Icon, place.Title, $"{place.Detail}\n{place.Category.ToUpperInvariant()}"));
+			Spacing = 12,
+			Children =
+			{
+				searchBox,
+				new ScrollView
+				{
+					Orientation = ScrollOrientation.Horizontal,
+					HorizontalScrollBarVisibility = ScrollBarVisibility.Never,
+					Content = chipRow
+				}
+			}
+		});
+		PageContent.Children.Add(results);
+		Refresh();
 	}
 }

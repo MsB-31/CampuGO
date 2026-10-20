@@ -2,13 +2,17 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="CampuGO.MainPage"
-             BackgroundColor="#101719"
              Shell.NavBarIsVisible="False">
-    <Grid RowDefinitions="*,Auto">
-        <ScrollView x:Name="ContentScroll" Grid.Row="0">
-            <VerticalStackLayout x:Name="PageContent" Padding="22,24,22,30" Spacing="22" />
+    <Grid RowDefinitions="Auto,*,Auto">
+        <Grid x:Name="AppBar" Grid.Row="0" Padding="8,8,16,8" MinimumHeightRequest="56"
+              ColumnDefinitions="Auto,*,Auto" />
+        <ScrollView x:Name="ContentScroll" Grid.Row="1">
+            <VerticalStackLayout x:Name="PageContent" Padding="20,8,20,28" Spacing="24" />
         </ScrollView>
-        <Grid x:Name="BottomNavigation" Grid.Row="1" BackgroundColor="#151E20"
-              Padding="10,8,10,12" ColumnDefinitions="*,*,*,*,*" />
+        <Grid x:Name="BottomBar" Grid.Row="2" RowDefinitions="1,Auto">
+            <BoxView x:Name="BottomBarLine" Grid.Row="0" HeightRequest="1" />
+            <Grid x:Name="BottomNavigation" Grid.Row="1" Padding="8,6,8,8"
+                  ColumnDefinitions="*,*,*,*,*" />
+        </Grid>
     </Grid>
 </ContentPage>

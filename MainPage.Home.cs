@@ -1,67 +1,69 @@
-﻿namespace CampuGO;
+﻿using Microsoft.Maui.Controls.Shapes;
+
+namespace CampuGO;
 
 public partial class MainPage
 {
-	private void BuildHomePage()
+	private void BuildHome()
 	{
-		PageContent.Children.Add(CreateHeader());
-		PageContent.Children.Add(new VerticalStackLayout
-		{
-			Spacing = 5,
-			Children =
-			{
-				Text(_profile is null ? "Bienvenue sur CampuGO" : $"Bonjour, {_profile.FullName}", 25, PrimaryText, true),
-				Text(_profile is null ? "Ton campus de Douala t’attend." : $"{_profile.Institution} · {_profile.Campus}", 14, SecondaryText)
-			}
-		});
-		PageContent.Children.Add(CreateHero());
+		PageContent.Children.Add(CampusPhoto());
+
+		View account;
 		if (_profile is null)
-			PageContent.Children.Add(ActionButton("Créer mon compte étudiant", () => ShowTab("Inscription"), false));
-		PageContent.Children.Add(Section("Pour toi", "Tout voir", () => ShowTab("Explorer")));
-		PageContent.Children.Add(CreateShortcuts());
-		PageContent.Children.Add(Section("À ne pas manquer", "L’agenda", () => ShowTab("Agenda")));
-		var next = CampusData.Schedule[0];
-		PageContent.Children.Add(EventCard("JEUDI 22 OCT.", next.Title, $"{next.Time}  ·  {next.Place}", "Découvrir", () => ShowTab("Agenda")));
-		PageContent.Children.Add(InfoCard("✦", "La cafétéria du campus", "Repas et boissons à midi, au campus de Logbessou comme à Bassa."));
-	}
-
-	private View CreateHero()
-	{
-		return Frame(new VerticalStackLayout
 		{
-			Spacing = 14,
-			Children =
+			account = Card(new VerticalStackLayout
 			{
-				Text("●  LA VIE DU CAMPUS", 11, Teal, true),
-				Text("Ton campus,\ntout près.", 29, PrimaryText, true),
-				Text("Les lieux, les gens et les bons plans\nde l’Université de Douala et de l’ENSPD.", 14, SecondaryText),
-				ActionButton("Explorer le campus", () => ShowTab("Explorer"), true)
-			}
-		}, 20, Color.FromArgb("#203031"));
-	}
-
-	private View CreateShortcuts()
-	{
-		var grid = new Grid
-		{
-			ColumnDefinitions = { new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Star) },
-			ColumnSpacing = 10
-		};
-		var shortcuts = new[] { ("⌕", "Explorer"), ("▦", "Agenda"), ("♧", "Alertes") };
-		for (var index = 0; index < shortcuts.Length; index++)
-		{
-			var shortcut = shortcuts[index];
-			var tile = new VerticalStackLayout
-			{
-				Spacing = 8, Padding = new Thickness(12, 14), BackgroundColor = Surface,
-				Children = { Text(shortcut.Item1, 22, Teal, true), Text(shortcut.Item2, 12, PrimaryText, true) }
-			};
-			var tap = new TapGestureRecognizer();
-			tap.Tapped += (_, _) => ShowTab(shortcut.Item2);
-			tile.GestureRecognizers.Add(tap);
-			Grid.SetColumn(tile, index);
-			grid.Children.Add(tile);
+				Spacing = 12,
+				Children =
+				{
+					Text("Créer un compte étudiant", 16, Theme.TextPrimary, true),
+					Text("Renseignez votre établissement, votre filière et votre campus pour personnaliser l’application.", 14, Theme.TextSecondary),
+					PrimaryButton("Créer un compte", () => NavigateTo(Screen.Signup))
+				}
+			});
 		}
-		return grid;
+		else
+		{
+			account = new VerticalStackLayout
+			{
+				Spacing = 2,
+				Children =
+				{
+					Text($"Bonjour, {_profile.FullName}", 18, Theme.TextPrimary, true),
+					Text($"{_profile.Track} · {_profile.Level} · {_profile.Campus}", 13, Theme.TextSecondary)
+				}
+			};
+		}
+
+		account.Margin = new Thickness(0, 8, 0, 0);
+		PageContent.Children.Add(account);
+	}
+
+	/// <summary>Photographie du campus de l'ENSPD (fichier Resources/Images/enspd_campus.jpg).</summary>
+	private static View CampusPhoto()
+	{
+		var photo = new Image
+		{
+			Source = "enspd_campus",
+			Aspect = Aspect.AspectFill,
+			HeightRequest = 220
+		};
+		AutomationProperties.SetName(photo, "Campus de l’ENSPD");
+
+		var frame = new Border
+		{
+			Padding = 0,
+			BackgroundColor = Theme.Surface,
+			Stroke = Theme.Border,
+			StrokeThickness = 1,
+			StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(Theme.RadiusCard) },
+			Content = photo
+		};
+
+		return new VerticalStackLayout
+		{
+			Spacing = 8,
+			Children = { frame, Text("Campus de l’ENSPD", 12, Theme.TextMuted) }
+		};
 	}
 }

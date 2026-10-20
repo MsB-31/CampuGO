@@ -1,62 +1,105 @@
-﻿namespace CampuGO;
+﻿using Microsoft.Maui.Controls.Shapes;
+
+namespace CampuGO;
 
 public partial class MainPage
 {
-	private void BuildSignupPage()
+	/// <summary>Champ de formulaire : libellé, saisie encadrée et message d'erreur.</summary>
+	private sealed class Field
 	{
-		PageContent.Children.Add(CreateHeader());
-		PageContent.Children.Add(PageTitle("Créer mon compte", "Rejoins la communauté étudiante de l’Université de Douala."));
+		public Field(string title, View input)
+		{
+			Box = new Border
+			{
+				Padding = new Thickness(12, 0),
+				MinimumHeightRequest = 48,
+				BackgroundColor = Theme.Surface,
+				Stroke = Theme.Border,
+				StrokeThickness = 1,
+				StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(Theme.RadiusControl) },
+				Content = input
+			};
+			Error = Text(string.Empty, 12, Theme.Danger);
+			Error.IsVisible = false;
+			Root = new VerticalStackLayout
+			{
+				Spacing = 6,
+				Children = { Text(title, 13, Theme.TextSecondary, true), Box, Error }
+			};
+		}
 
-		// Identité
-		var name = CreateFormEntry("Ex. Brice Ekambi", Keyboard.Text);
-		var email = CreateFormEntry("nom@exemple.com", Keyboard.Email);
-		var phone = CreateFormEntry("6XX XX XX XX (facultatif)", Keyboard.Telephone);
-		var errName = ErrorLabel();
-		var errEmail = ErrorLabel();
-		var errPhone = ErrorLabel();
+		public Border Box { get; }
+		public Label Error { get; }
+		public VerticalStackLayout Root { get; }
 
-		// Parcours
-		var institution = CreatePicker("Choisir un établissement", CampusData.InstitutionLabels);
-		var track = CreatePicker("Choisir une filière", Array.Empty<string>());
-		var level = CreatePicker("Choisir un niveau", CampusData.Levels);
-		var campus = CreatePicker("Choisir un campus", CampusData.Campuses);
-		var errInstitution = ErrorLabel();
-		var errTrack = ErrorLabel();
-		var errLevel = ErrorLabel();
-		var errCampus = ErrorLabel();
+		public bool Check(string? message)
+		{
+			Error.Text = message ?? string.Empty;
+			Error.IsVisible = message is not null;
+			Box.Stroke = message is null ? Theme.Border : Theme.Danger;
+			return message is null;
+		}
+	}
+
+	private void BuildSignup()
+	{
+		var name = FormEntry("Ex. Brice Ekambi", Keyboard.Text);
+		var email = FormEntry("nom@exemple.com", Keyboard.Email);
+		var phone = FormEntry("6XX XX XX XX", Keyboard.Telephone);
+		var institution = FormPicker("Choisir un établissement", CampusData.InstitutionLabels);
+		var track = FormPicker("Choisir une filière", Array.Empty<string>());
+		var level = FormPicker("Choisir un niveau", CampusData.Levels);
+		var campus = FormPicker("Choisir un campus", CampusData.Campuses);
+		var password = FormEntry("8 caractères minimum", Keyboard.Default, true);
+		var confirm = FormEntry("Retapez le mot de passe", Keyboard.Default, true);
+
+		var fName = new Field("Nom complet", name);
+		var fEmail = new Field("Adresse e-mail", email);
+		var fPhone = new Field("Téléphone (facultatif)", phone);
+		var fInstitution = new Field("Établissement", institution);
+		var fTrack = new Field("Filière", track);
+		var fLevel = new Field("Niveau", level);
+		var fCampus = new Field("Campus", campus);
 
 		institution.SelectedIndexChanged += (_, _) =>
 		{
-			var selected = institution.SelectedIndex < 0 ? null : CampusData.Institutions[institution.SelectedIndex];
-			if (selected is null) return;
+			if (institution.SelectedIndex < 0) return;
+			var selected = CampusData.Institutions[institution.SelectedIndex];
 			track.ItemsSource = selected.Tracks.ToList();
 			track.SelectedIndex = -1;
 			var campusIndex = Array.IndexOf(CampusData.Campuses, selected.DefaultCampus);
 			if (campusIndex >= 0) campus.SelectedIndex = campusIndex;
 		};
 
-		// Sécurité
-		var password = CreateFormEntry("8 caractères minimum", Keyboard.Default, isPassword: true);
-		var confirm = CreateFormEntry("Retape ton mot de passe", Keyboard.Default, isPassword: true);
-		var errPassword = ErrorLabel();
-		var errConfirm = ErrorLabel();
-		var toggle = new Button
+		// Mot de passe : bouton œil, indicateur de robustesse, confirmation
+		var eye = new ImageButton
 		{
-			Text = "Afficher", FontSize = 12, FontFamily = "OpenSansSemibold", TextColor = Teal,
-			BackgroundColor = Colors.Transparent, Padding = new Thickness(8, 0), MinimumHeightRequest = 44
+			Source = Icons.Source(Icons.Visibility, Theme.TextMuted, 22),
+			BackgroundColor = Colors.Transparent,
+			WidthRequest = 40,
+			HeightRequest = 40,
+			Padding = 8,
+			VerticalOptions = LayoutOptions.Center
 		};
-		toggle.Clicked += (_, _) =>
+		AutomationProperties.SetName(eye, "Afficher ou masquer le mot de passe");
+		eye.Clicked += (_, _) =>
 		{
 			password.IsPassword = !password.IsPassword;
 			confirm.IsPassword = password.IsPassword;
-			toggle.Text = password.IsPassword ? "Afficher" : "Masquer";
+			eye.Source = Icons.Source(password.IsPassword ? Icons.Visibility : Icons.VisibilityOff, Theme.TextMuted, 22);
 		};
-		var passwordRow = new Grid { ColumnDefinitions = { new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto) } };
-		passwordRow.Children.Add(password);
-		passwordRow.Children.Add(toggle);
-		Grid.SetColumn(toggle, 1);
 
-		var bars = Enumerable.Range(0, 4).Select(_ => new BoxView { HeightRequest = 4, CornerRadius = 2, Color = BarOff }).ToArray();
+		var passwordRow = new Grid
+		{
+			ColumnDefinitions = { new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto) },
+			Children = { password, eye }
+		};
+		Grid.SetColumn(eye, 1);
+
+		var fPassword = new Field("Mot de passe", passwordRow);
+		var fConfirm = new Field("Confirmation du mot de passe", confirm);
+
+		var bars = Enumerable.Range(0, 4).Select(_ => new BoxView { HeightRequest = 4, CornerRadius = 2, Color = Theme.SurfaceRaised }).ToArray();
 		var barsGrid = new Grid { ColumnSpacing = 4 };
 		for (var i = 0; i < bars.Length; i++)
 		{
@@ -64,124 +107,132 @@ public partial class MainPage
 			Grid.SetColumn(bars[i], i);
 			barsGrid.Children.Add(bars[i]);
 		}
-		var strength = Text("Robustesse : —", 12, MutedText);
+		var strength = Text("Robustesse : —", 12, Theme.TextMuted);
 		password.TextChanged += (_, args) => UpdateStrength(args.NewTextValue ?? string.Empty, bars, strength);
 
-		var consent = new CheckBox { Color = Teal, MinimumHeightRequest = 44, MinimumWidthRequest = 44 };
-		var errConsent = ErrorLabel();
-		var summary = Text(string.Empty, 13, AlertColor);
+		// Consentement
+		var consent = new CheckBox { Color = Theme.Accent, VerticalOptions = LayoutOptions.Start };
+		var consentText = Text("J’accepte que ces informations soient enregistrées sur cet appareil pour créer mon profil.", 13, Theme.TextSecondary);
+		var consentTap = new TapGestureRecognizer();
+		consentTap.Tapped += (_, _) => consent.IsChecked = !consent.IsChecked;
+		consentText.GestureRecognizers.Add(consentTap);
+		var consentRow = new Grid
+		{
+			ColumnSpacing = 4,
+			ColumnDefinitions = { new ColumnDefinition(GridLength.Auto), new ColumnDefinition(GridLength.Star) },
+			Children = { consent, consentText }
+		};
+		Grid.SetColumn(consentText, 1);
+		consentText.VerticalOptions = LayoutOptions.Center;
+		var errConsent = Text(string.Empty, 12, Theme.Danger);
+		errConsent.IsVisible = false;
 
-		PageContent.Children.Add(SectionLabel("IDENTITÉ"));
-		PageContent.Children.Add(FormField("Nom complet", name, errName));
-		PageContent.Children.Add(FormField("Adresse e-mail", email, errEmail));
-		PageContent.Children.Add(FormField("Téléphone (+237)", phone, errPhone));
-		PageContent.Children.Add(SectionLabel("PARCOURS"));
-		PageContent.Children.Add(FormField("Établissement", institution, errInstitution));
-		PageContent.Children.Add(FormField("Filière", track, errTrack));
-		PageContent.Children.Add(FormField("Niveau", level, errLevel));
-		PageContent.Children.Add(FormField("Campus", campus, errCampus));
-		PageContent.Children.Add(SectionLabel("SÉCURITÉ"));
-		PageContent.Children.Add(FormField("Mot de passe", passwordRow, errPassword));
-		PageContent.Children.Add(new VerticalStackLayout
-		{
-			Spacing = 6,
-			Children = { barsGrid, strength, Text("8 caractères minimum, avec au moins un chiffre et une majuscule.", 11, MutedText) }
-		});
-		PageContent.Children.Add(FormField("Confirmer le mot de passe", confirm, errConfirm));
-		PageContent.Children.Add(new VerticalStackLayout
-		{
-			Spacing = 4,
-			Children =
-			{
-				new HorizontalStackLayout
-				{
-					Spacing = 8,
-					Children = { consent, Text("J’accepte l’utilisation de ces informations pour créer mon profil.", 12, SecondaryText) }
-				},
-				errConsent
-			}
-		});
+		var summary = Text(string.Empty, 13, Theme.Danger);
 
 		bool Validate()
 		{
 			var ok = true;
+
 			var fullName = name.Text?.Trim() ?? string.Empty;
-			ok &= Check(errName, fullName.Length < 3 ? "Saisis ton nom complet." : null);
+			ok &= fName.Check(fullName.Length < 3 ? "Saisissez votre nom complet." : null);
 
 			var mail = email.Text?.Trim() ?? string.Empty;
 			var mailOk = System.Net.Mail.MailAddress.TryCreate(mail, out _) && mail.Contains('@') && mail[(mail.IndexOf('@') + 1)..].Contains('.');
-			ok &= Check(errEmail, mailOk ? null : "Saisis une adresse e-mail valide.");
+			ok &= fEmail.Check(mailOk ? null : "Saisissez une adresse e-mail valide.");
 
 			var phoneText = phone.Text?.Trim() ?? string.Empty;
-			ok &= Check(errPhone, phoneText.Length == 0 || NormalizePhone(phoneText) is not null
+			ok &= fPhone.Check(phoneText.Length == 0 || NormalizePhone(phoneText) is not null
 				? null : "Numéro invalide : 9 chiffres commençant par 6 (ex. 6 77 12 34 56).");
 
-			ok &= Check(errInstitution, institution.SelectedIndex < 0 ? "Choisis ton établissement." : null);
-			ok &= Check(errTrack, track.SelectedIndex < 0 ? "Choisis ta filière." : null);
-			ok &= Check(errLevel, level.SelectedIndex < 0 ? "Choisis ton niveau." : null);
-			ok &= Check(errCampus, campus.SelectedIndex < 0 ? "Choisis ton campus." : null);
+			ok &= fInstitution.Check(institution.SelectedIndex < 0 ? "Choisissez votre établissement." : null);
+			ok &= fTrack.Check(track.SelectedIndex < 0 ? "Choisissez votre filière." : null);
+			ok &= fLevel.Check(level.SelectedIndex < 0 ? "Choisissez votre niveau." : null);
+			ok &= fCampus.Check(campus.SelectedIndex < 0 ? "Choisissez votre campus." : null);
 
 			var pwd = password.Text ?? string.Empty;
 			var pwdOk = pwd.Length >= 8 && pwd.Any(char.IsDigit) && pwd.Any(char.IsUpper);
-			ok &= Check(errPassword, pwdOk ? null : "8 caractères minimum, avec un chiffre et une majuscule.");
-			ok &= Check(errConfirm, pwd == (confirm.Text ?? string.Empty) && pwd.Length > 0 ? null : "Les mots de passe ne correspondent pas.");
-			ok &= Check(errConsent, consent.IsChecked ? null : "Accepte les conditions pour continuer.");
+			ok &= fPassword.Check(pwdOk ? null : "8 caractères minimum, avec un chiffre et une majuscule.");
+			ok &= fConfirm.Check(pwd.Length > 0 && pwd == (confirm.Text ?? string.Empty) ? null : "Les mots de passe ne correspondent pas.");
+
+			errConsent.Text = consent.IsChecked ? string.Empty : "Acceptez pour continuer.";
+			errConsent.IsVisible = !consent.IsChecked;
+			ok &= consent.IsChecked;
 			return ok;
 		}
 
-		var submit = new Button
+		var submit = PrimaryButton("Créer le compte", async () =>
 		{
-			Text = "Créer mon compte",
-			FontSize = 15,
-			FontFamily = "OpenSansSemibold",
-			TextColor = OnTeal,
-			BackgroundColor = Teal,
-			CornerRadius = 11,
-			MinimumHeightRequest = 52,
-			Command = new Command(async () =>
+			if (!Validate())
 			{
-				if (!Validate())
-				{
-					summary.Text = "Corrige les champs signalés pour continuer.";
-					return;
-				}
+				summary.Text = "Corrigez les champs signalés pour continuer.";
+				return;
+			}
 
-				summary.Text = string.Empty;
-				var selectedInstitution = CampusData.Institutions[institution.SelectedIndex];
-				_profile = new UserProfile
-				{
-					FullName = name.Text!.Trim(),
-					Email = email.Text!.Trim().ToLowerInvariant(),
-					Phone = FormatPhone(NormalizePhone(phone.Text)),
-					Institution = selectedInstitution.Label,
-					Track = selectedInstitution.Tracks[track.SelectedIndex],
-					Level = CampusData.Levels[level.SelectedIndex],
-					Campus = CampusData.Campuses[campus.SelectedIndex]
-				};
-				_profile.Save();
-				await DisplayAlertAsync("Compte créé", $"Bienvenue sur CampuGO, {_profile.FullName} !", "Continuer");
-				ShowTab("Profil");
-			})
-		};
-		PageContent.Children.Add(summary);
-		PageContent.Children.Add(submit);
-		PageContent.Children.Add(new Button
-		{
-			Text = "Retour à l’accueil",
-			FontSize = 14,
-			TextColor = Teal,
-			BackgroundColor = Colors.Transparent,
-			MinimumHeightRequest = 44,
-			Command = new Command(() => ShowTab("Accueil"))
+			summary.Text = string.Empty;
+			var selectedInstitution = CampusData.Institutions[institution.SelectedIndex];
+			_profile = new UserProfile
+			{
+				FullName = name.Text!.Trim(),
+				Email = email.Text!.Trim().ToLowerInvariant(),
+				Phone = FormatPhone(NormalizePhone(phone.Text)),
+				Institution = selectedInstitution.Label,
+				Track = selectedInstitution.Tracks[track.SelectedIndex],
+				Level = CampusData.Levels[level.SelectedIndex],
+				Campus = CampusData.Campuses[campus.SelectedIndex]
+			};
+			_profile.Save();
+			await DisplayAlertAsync("Compte créé", $"Bienvenue sur CampuGO, {_profile.FullName}.", "Continuer");
+			Show(Screen.Profile);
 		});
+
+		PageContent.Children.Add(FormSection("Identité", fName.Root, fEmail.Root, fPhone.Root));
+		PageContent.Children.Add(FormSection("Parcours", fInstitution.Root, fTrack.Root, fLevel.Root, fCampus.Root));
+		PageContent.Children.Add(FormSection("Sécurité", fPassword.Root,
+			new VerticalStackLayout
+			{
+				Spacing = 6,
+				Children = { barsGrid, strength, Text("8 caractères minimum, avec au moins un chiffre et une majuscule.", 12, Theme.TextMuted) }
+			},
+			fConfirm.Root));
+		PageContent.Children.Add(new VerticalStackLayout { Spacing = 4, Children = { consentRow, errConsent } });
+		PageContent.Children.Add(new VerticalStackLayout { Spacing = 10, Children = { summary, submit } });
 	}
 
-	private static bool Check(Label error, string? message)
+	private static View FormSection(string title, params View[] fields)
 	{
-		error.Text = message ?? string.Empty;
-		error.IsVisible = message is not null;
-		return message is null;
+		var label = Text(title.ToUpperInvariant(), 12, Theme.TextMuted, true);
+		label.CharacterSpacing = 0.6;
+
+		var stack = new VerticalStackLayout { Spacing = 16 };
+		stack.Children.Add(label);
+		foreach (var field in fields) stack.Children.Add(field);
+		return stack;
 	}
+
+	private static Entry FormEntry(string placeholder, Keyboard keyboard, bool isPassword = false) => new()
+	{
+		Placeholder = placeholder,
+		PlaceholderColor = Theme.TextMuted,
+		TextColor = Theme.TextPrimary,
+		FontFamily = Theme.Regular,
+		FontSize = 15,
+		BackgroundColor = Colors.Transparent,
+		Keyboard = keyboard,
+		IsPassword = isPassword,
+		HeightRequest = 48
+	};
+
+	private static Picker FormPicker(string title, IEnumerable<string> items) => new()
+	{
+		Title = title,
+		TitleColor = Theme.TextMuted,
+		TextColor = Theme.TextPrimary,
+		FontFamily = Theme.Regular,
+		FontSize = 15,
+		BackgroundColor = Colors.Transparent,
+		HeightRequest = 48,
+		ItemsSource = items.ToList()
+	};
 
 	private static string? NormalizePhone(string? raw)
 	{
@@ -203,8 +254,9 @@ public partial class MainPage
 	private static void UpdateStrength(string password, BoxView[] bars, Label label)
 	{
 		var score = password.Length == 0 ? 0 : PasswordScore(password);
-		var color = score switch { 1 => AlertColor, 2 => WarnColor, _ => Teal };
-		for (var i = 0; i < bars.Length; i++) bars[i].Color = i < score ? color : BarOff;
+		var color = score switch { 1 => Theme.Danger, 2 => Theme.Warning, _ => Theme.Accent };
+		for (var i = 0; i < bars.Length; i++) bars[i].Color = i < score ? color : Theme.SurfaceRaised;
+
 		label.Text = score switch
 		{
 			0 => "Robustesse : —",
@@ -213,43 +265,6 @@ public partial class MainPage
 			3 => "Robustesse : solide",
 			_ => "Robustesse : très solide"
 		};
-		label.TextColor = score == 0 ? MutedText : color;
+		label.TextColor = score == 0 ? Theme.TextMuted : color;
 	}
-
-	private static Label SectionLabel(string text) => Text(text, 11, Teal, true);
-
-	private static View FormField(string title, View input, Label error) => new VerticalStackLayout
-	{
-		Spacing = 6,
-		Children = { Text(title, 13, SecondaryText, true), Frame(input, 10), error }
-	};
-
-	private static Label ErrorLabel() => new()
-	{
-		FontSize = 12, FontFamily = "OpenSansRegular", TextColor = AlertColor,
-		LineBreakMode = LineBreakMode.WordWrap, IsVisible = false
-	};
-
-	private static Entry CreateFormEntry(string placeholder, Keyboard keyboard, bool isPassword = false) => new()
-	{
-		Placeholder = placeholder,
-		PlaceholderColor = MutedText,
-		TextColor = PrimaryText,
-		BackgroundColor = Colors.Transparent,
-		FontSize = 15,
-		Keyboard = keyboard,
-		IsPassword = isPassword,
-		HeightRequest = 48
-	};
-
-	private static Picker CreatePicker(string title, IEnumerable<string> items) => new()
-	{
-		Title = title,
-		TitleColor = SecondaryText,
-		TextColor = PrimaryText,
-		BackgroundColor = Colors.Transparent,
-		FontSize = 15,
-		HeightRequest = 52,
-		ItemsSource = items.ToList()
-	};
 }

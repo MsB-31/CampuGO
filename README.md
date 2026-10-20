@@ -19,18 +19,19 @@ Application mobile **.NET MAUI** dédiée à la vie de campus de l’**Universit
 7. [Dépannage](#dépannage)
 8. [Limites connues et feuille de route](#limites-connues-et-feuille-de-route)
 9. [Historique du dépôt](#historique-du-dépôt)
-10. [Auteur](#auteur)
+10. [Crédits](#crédits)
+11. [Auteur](#auteur)
 
 ## Fonctionnalités
 
 | Écran | Description |
 |---|---|
-| **Accueil** | Salutation personnalisée, accès rapides, prochain événement, carte d’information. |
+| **Accueil** | Prochains événements et alertes récentes ; invitation à créer un compte tant qu’aucun profil n’existe. |
 | **Explorer** | Recherche textuelle et filtres par catégorie (Activités, Services, Restauration). |
-| **Agenda** | Sélecteur de jours et programme détaillé (heure, lieu, catégorie). |
-| **Alertes** | Notifications classées par catégorie, avec mise en évidence des alertes urgentes. |
-| **Profil** | Informations du compte étudiant, raccourcis et suppression du profil local. |
-| **Inscription** | Création d’un compte étudiant avec validation complète (voir ci-dessous). |
+| **Agenda** | Sélecteur de jours (sept jours glissants) et programme du jour : heure, lieu, catégorie. |
+| **Alertes** | Informations du campus, avec mise en évidence des alertes urgentes. |
+| **Profil** | Informations du compte étudiant et suppression du profil enregistré sur l’appareil. |
+| **Créer un compte** | Inscription étudiante avec validation complète (voir ci-dessous). |
 
 ### Inscription étudiante
 
@@ -56,7 +57,8 @@ Chaque champ affiche son message d’erreur sous la saisie. Après validation, l
 | SDK Android | Cible API 36, minimum API 21 |
 | Interface | Construite par code (classe partielle `MainPage`, un fichier par écran) |
 | Persistance | `Microsoft.Maui.Storage.Preferences` |
-| Polices | Open Sans (Regular, Semibold) |
+| Polices | Inter (Regular, SemiBold) |
+| Icônes | Material Icons (police d’icônes vectorielles) |
 | Outillage | VS Code, C# Dev Kit, .NET MAUI extension |
 
 ## Architecture
@@ -65,20 +67,23 @@ Chaque champ affiche son message d’erreur sous la saisie. Après validation, l
 CampuGO/
 ├── App.xaml / App.xaml.cs        Point d’entrée, dictionnaires de ressources
 ├── AppShell.xaml                 Shell avec une page unique (MainPage)
-├── MainPage.xaml                 Conteneur : zone défilante + barre de navigation
-├── MainPage.xaml.cs              Noyau : navigation (ShowTab), en-tête, composants partagés
+├── MainPage.xaml                 Structure : barre du haut, zone défilante, barre de navigation
+├── MainPage.xaml.cs              Noyau : navigation avec historique, barres du haut et du bas
+├── MainPage.Components.cs        Composants réutilisables (cartes, listes, boutons, lignes)
 ├── MainPage.Home.cs              Écran Accueil
 ├── MainPage.Explore.cs           Écran Explorer (recherche, filtres)
 ├── MainPage.Agenda.cs            Écran Agenda
 ├── MainPage.Alerts.cs            Écran Alertes
 ├── MainPage.Profile.cs           Écran Profil
-├── MainPage.Signup.cs            Écran Inscription (formulaire et validation)
+├── MainPage.Signup.cs            Écran Créer un compte (formulaire et validation)
+├── Theme.cs                      Jetons de design : couleurs, polices, rayons
+├── Icons.cs                      Icônes (Material Icons)
 ├── CampusData.cs                 Données d’exemple (campus, établissements, événements…)
 ├── UserProfile.cs                Modèle de profil et persistance locale
 ├── MauiProgram.cs                Configuration de l’application et des polices
 ├── Resources/
 │   ├── Styles/                   Colors.xaml, Styles.xaml
-│   ├── Fonts/                    Open Sans
+│   ├── Fonts/                    Inter, Material Icons, Open Sans
 │   ├── AppIcon/ · Splash/        Icône et écran de démarrage
 │   └── Images/
 ├── Platforms/                    Code spécifique Android, iOS, MacCatalyst, Windows
@@ -87,7 +92,7 @@ CampuGO/
 
 ### Navigation
 
-La navigation est gérée manuellement par `ShowTab(string)` : elle vide le contenu, reconstruit la barre du bas et affiche l’écran demandé.
+La navigation est gérée par la classe `MainPage` : chaque changement d’écran passe par `NavigateTo`, qui mémorise l’écran quitté dans un **historique**. Dès que l’historique n’est pas vide, une **flèche de retour apparaît en haut à gauche** de la barre du haut ; elle (et le bouton retour d’Android) ramène à l’écran précédent via `GoBack`. L’écran de création de compte masque la barre du bas pour concentrer l’attention sur le formulaire.
 
 ```mermaid
 flowchart LR
@@ -182,7 +187,7 @@ Sur un téléphone réel : activer le **débogage USB**, brancher l’appareil e
 | Objectif | Fichier |
 |---|---|
 | Modifier campus, établissements, filières, lieux, événements, alertes | `CampusData.cs` |
-| Modifier la palette de couleurs | `Resources/Styles/Colors.xaml` et constantes en tête de `MainPage.xaml.cs` |
+| Modifier couleurs, polices et rayons | `Theme.cs` |
 | Modifier les styles par défaut des contrôles | `Resources/Styles/Styles.xaml` |
 | Changer l’icône ou l’écran de démarrage | `Resources/AppIcon/`, `Resources/Splash/` |
 | Changer l’identifiant de l’application | `ApplicationId` dans `CampuGO.csproj` |
@@ -201,8 +206,8 @@ Sur un téléphone réel : activer le **débogage USB**, brancher l’appareil e
 
 ## Limites connues et feuille de route
 
-- **Écarts avec la maquette Figma** : la maquette décrit huit écrans (connexion, fil d’annonces, détail, événements, annuaire, favoris, administration). L’application en implémente une partie sous une forme simplifiée. La palette et la police diffèrent aussi (Open Sans dans l’application, Inter dans la maquette).
-- **Architecture** : l’interface est construite par code dans une seule classe `MainPage`, répartie en fichiers partiels. Une migration vers des pages XAML dédiées, `Shell` et MVVM améliorerait la maintenabilité et la navigation (retour arrière, liens profonds).
+- **Écarts avec la maquette Figma** : la maquette décrit huit écrans (connexion, fil d’annonces, détail, événements, annuaire, favoris, administration). L’application en implémente une partie sous une forme simplifiée. La palette et la police (Inter) reprennent celles de la maquette.
+- **Architecture** : l’interface est construite par code dans une seule classe `MainPage`, répartie en fichiers partiels. Une migration vers des pages XAML dédiées, `Shell` et MVVM améliorerait la maintenabilité et permettrait les liens profonds.
 - **Données** : le contenu est statique. Une API ou une base locale (SQLite) permettrait un contenu dynamique et un mode hors-ligne.
 - **Authentification** : le compte est un profil local, sans mot de passe stocké ni connexion.
 - **Tests** : aucun test automatisé pour l’instant.
@@ -221,8 +226,15 @@ L’historique est organisé par phase d’intégration des interfaces, puis par
 | `feat` | Enregistrement local du profil étudiant |
 | `chore` | Tâches VS Code pour l’émulateur Android |
 | `docs` | README technique |
+| `feat` | Refonte de l’interface : thème, icônes, navigation avec flèche de retour |
 
 Les messages de commit utilisent les préfixes `phase-a:`, `phase-b:`, `phase-c:`, `feat:`, `chore:` et `docs:`.
+
+## Crédits
+
+- [Inter](https://rsms.me/inter/) : licence SIL Open Font License 1.1
+- [Material Icons](https://github.com/google/material-design-icons) : licence Apache 2.0
+- Open Sans : licence Apache 2.0 (police du modèle .NET MAUI)
 
 ## Auteur
 

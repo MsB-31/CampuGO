@@ -1,38 +1,72 @@
-﻿namespace CampuGO;
+﻿using Microsoft.Maui.Controls.Shapes;
+
+namespace CampuGO;
 
 public partial class MainPage
 {
-	private void BuildAgendaPage()
+	private void BuildAgenda()
 	{
-		PageContent.Children.Add(CreateHeader());
-		PageContent.Children.Add(PageTitle("Ton agenda", "Les rendez-vous de la vie étudiante."));
-		var dates = new HorizontalStackLayout { Spacing = 9 };
-		foreach (var day in new[] { ("MAR", "20"), ("MER", "21"), ("JEU", "22"), ("VEN", "23"), ("SAM", "24") })
-		{
-			var selected = day.Item2 == "22";
-			dates.Children.Add(Frame(new VerticalStackLayout
-			{
-				Spacing = 5, HorizontalOptions = LayoutOptions.Center,
-				Children = { Text(day.Item1, 10, selected ? OnTeal : SecondaryText, true), Text(day.Item2, 17, selected ? OnTeal : PrimaryText, true) }
-			}, 10, selected ? Teal : Surface));
-		}
-		PageContent.Children.Add(new ScrollView { Orientation = ScrollOrientation.Horizontal, Content = dates });
-		PageContent.Children.Add(Section("Jeudi 22 octobre", "Cette semaine", () => { }));
-		foreach (var item in CampusData.Schedule)
-			PageContent.Children.Add(ScheduleItem(item.Time, item.Title, item.Place, item.Category));
-		PageContent.Children.Add(Text("PENSE-BÊTE", 11, SecondaryText, true));
-		PageContent.Children.Add(InfoCard("✦", "Garde tes rendez-vous sous la main", "Retrouve ici les événements de l’Université de Douala et de l’ENSPD."));
-	}
+		var days = Enumerable.Range(0, 7).Select(offset => DateTime.Today.AddDays(offset)).ToList();
+		if (_agendaDate.Date < days[0] || _agendaDate.Date > days[^1]) _agendaDate = days[0];
 
-	private View ScheduleItem(string time, string title, string place, string category)
-	{
-		var timeLabel = Text(time, 13, Teal, true);
-		timeLabel.WidthRequest = 48;
-		var details = new VerticalStackLayout
+		var list = new VerticalStackLayout { Spacing = 12 };
+		var chips = new List<(Border Box, Label Top, Label Bottom, DateTime Date)>();
+
+		void Refresh()
 		{
-			Spacing = 5,
-			Children = { Text(title, 15, PrimaryText, true), Text(place, 12, SecondaryText), Text(category, 10, Teal, true) }
-		};
-		return Frame(new HorizontalStackLayout { Spacing = 12, Children = { timeLabel, details } }, 14);
+			foreach (var (box, top, bottom, date) in chips)
+			{
+				var selected = date.Date == _agendaDate.Date;
+				box.BackgroundColor = selected ? Theme.Accent : Theme.Surface;
+				box.Stroke = selected ? Theme.Accent : Theme.Border;
+				top.TextColor = selected ? Theme.OnAccent : Theme.TextMuted;
+				bottom.TextColor = selected ? Theme.OnAccent : Theme.TextPrimary;
+			}
+
+			list.Children.Clear();
+			list.Children.Add(Text(Cap(_agendaDate.ToString("dddd d MMMM", Fr)), 16, Theme.TextPrimary, true));
+
+			var events = CampusData.EventsOn(_agendaDate);
+			if (events.Count == 0)
+				list.Children.Add(Text("Aucun événement prévu ce jour.", 14, Theme.TextSecondary));
+			else
+				list.Children.Add(ListCard(events.Select(item => EventRow(item, item.Category))));
+		}
+
+		var dayRow = new HorizontalStackLayout { Spacing = 8 };
+		foreach (var date in days)
+		{
+			var captured = date;
+			var top = Text(date == days[0] ? "Auj." : Cap(date.ToString("ddd", Fr).TrimEnd('.')), 12, Theme.TextMuted, true, TextAlignment.Center);
+			var bottom = Text(date.Day.ToString(), 17, Theme.TextPrimary, true, TextAlignment.Center);
+
+			var box = new Border
+			{
+				WidthRequest = 56,
+				Padding = new Thickness(0, 10),
+				BackgroundColor = Theme.Surface,
+				Stroke = Theme.Border,
+				StrokeThickness = 1,
+				StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(Theme.RadiusControl) },
+				Content = new VerticalStackLayout { Spacing = 2, Children = { top, bottom } }
+			};
+			AutomationProperties.SetName(box, Cap(date.ToString("dddd d MMMM", Fr)));
+
+			var tap = new TapGestureRecognizer();
+			tap.Tapped += (_, _) => { _agendaDate = captured; Refresh(); };
+			box.GestureRecognizers.Add(tap);
+
+			chips.Add((box, top, bottom, date));
+			dayRow.Children.Add(box);
+		}
+
+		PageContent.Children.Add(new ScrollView
+		{
+			Orientation = ScrollOrientation.Horizontal,
+			HorizontalScrollBarVisibility = ScrollBarVisibility.Never,
+			Content = dayRow
+		});
+		PageContent.Children.Add(list);
+		Refresh();
 	}
 }
