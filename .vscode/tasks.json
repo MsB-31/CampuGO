@@ -16,6 +16,13 @@
 			"problemMatcher": []
 		},
 		{
+			"label": "CampuGO: Relier l’API au téléphone (adb reverse)",
+			"type": "shell",
+			"command": "export DOTNET_ROOT=\"$HOME/.dotnet\" JAVA_HOME=\"$HOME/.local/share/jdk17\" ANDROID_HOME=\"$HOME/Android/Sdk\" ANDROID_SDK_ROOT=\"$HOME/Android/Sdk\" PATH=\"$HOME/.dotnet:$HOME/.local/share/jdk17/bin:$HOME/Android/Sdk/emulator:$HOME/Android/Sdk/platform-tools:$HOME/Android/Sdk/cmdline-tools/latest/bin:$PATH\" && adb reverse tcp:7080 tcp:7080",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
 			"label": "CampuGO: 3. Lancer sur l’émulateur (Debug)",
 			"type": "shell",
 			"command": "export DOTNET_ROOT=\"$HOME/.dotnet\" JAVA_HOME=\"$HOME/.local/share/jdk17\" ANDROID_HOME=\"$HOME/Android/Sdk\" ANDROID_SDK_ROOT=\"$HOME/Android/Sdk\" PATH=\"$HOME/.dotnet:$HOME/.local/share/jdk17/bin:$HOME/Android/Sdk/emulator:$HOME/Android/Sdk/platform-tools:$HOME/Android/Sdk/cmdline-tools/latest/bin:$PATH\" && dotnet build CampuGO.csproj -f net10.0-android -t:Run",

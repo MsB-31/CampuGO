@@ -1,9 +1,12 @@
-﻿using Microsoft.Maui.Controls.Shapes;
+﻿using CampuGO.Services;
+using Microsoft.Maui.Controls.Shapes;
 
 namespace CampuGO;
 
 public partial class MainPage
 {
+	private IReadOnlyList<(string Category, string Title, string Detail, string Icon)> _places = CampusData.Places;
+
 	private void BuildExplore()
 	{
 		var entry = new Entry
@@ -52,7 +55,7 @@ public partial class MainPage
 			}
 
 			results.Children.Clear();
-			var matches = CampusData.Places.Where(place =>
+			var matches = _places.Where(place =>
 				(_exploreFilter == "Tout" || place.Category == _exploreFilter) &&
 				(string.IsNullOrWhiteSpace(_exploreQuery) ||
 					place.Title.Contains(_exploreQuery, StringComparison.OrdinalIgnoreCase) ||
@@ -104,5 +107,14 @@ public partial class MainPage
 		});
 		PageContent.Children.Add(results);
 		Refresh();
+
+		// Les lieux affichés d'abord sont les données locales ; ceux de l'API les remplacent dès leur arrivée.
+		RunInBackground(async () =>
+		{
+			var remote = await AppServices.Data.TryGetPlacesAsync();
+			if (remote is null || _current != Screen.Explore) return;
+			_places = remote;
+			Refresh();
+		});
 	}
 }

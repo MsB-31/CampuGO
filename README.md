@@ -26,7 +26,7 @@ Application mobile **.NET MAUI** dédiée à la vie de campus de l’**Universit
 
 | Écran | Description |
 |---|---|
-| **Accueil** | Prochains événements et alertes récentes ; invitation à créer un compte tant qu’aucun profil n’existe. |
+| **Accueil** | Photographie du campus de l’ENSPD, puis invitation à créer un compte (ou salutation personnalisée) ; logotype ENSPD dans la barre du haut. |
 | **Explorer** | Recherche textuelle et filtres par catégorie (Activités, Services, Restauration). |
 | **Agenda** | Sélecteur de jours (sept jours glissants) et programme du jour : heure, lieu, catégorie. |
 | **Alertes** | Informations du campus, avec mise en évidence des alertes urgentes. |
@@ -85,7 +85,7 @@ CampuGO/
 │   ├── Styles/                   Colors.xaml, Styles.xaml
 │   ├── Fonts/                    Inter, Material Icons, Open Sans
 │   ├── AppIcon/ · Splash/        Icône et écran de démarrage
-│   └── Images/
+│   └── Images/                   Photographie du campus et logotype ENSPD
 ├── Platforms/                    Code spécifique Android, iOS, MacCatalyst, Windows
 └── .vscode/tasks.json            Tâches de lancement sur l’émulateur
 ```
@@ -235,6 +235,8 @@ Les messages de commit utilisent les préfixes `phase-a:`, `phase-b:`, `phase-c:
 - [Inter](https://rsms.me/inter/) : licence SIL Open Font License 1.1
 - [Material Icons](https://github.com/google/material-design-icons) : licence Apache 2.0
 - Open Sans : licence Apache 2.0 (police du modèle .NET MAUI)
+- Photographie : campus de l’ENSPD, utilisée à titre illustratif
+- Logotype « ENSPD » : création typographique réalisée pour ce projet (logo non officiel)
 
 ## Auteur
 

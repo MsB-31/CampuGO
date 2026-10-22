@@ -173,6 +173,13 @@ public partial class MainPage
 
 	// ---------------------------------------------------------------- Utilitaires
 
+	/// <summary>Lance un travail asynchrone sans bloquer l'interface ; une erreur imprévue ne ferme pas l'application.</summary>
+	private static async void RunInBackground(Func<Task> work)
+	{
+		try { await work(); }
+		catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); }
+	}
+
 	private static string Cap(string text) =>
 		text.Length == 0 ? text : char.ToUpper(text[0], Fr) + text[1..];
 

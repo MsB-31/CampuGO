@@ -1,4 +1,5 @@
-﻿using Microsoft.Maui.Controls.Shapes;
+﻿using CampuGO.Services;
+using Microsoft.Maui.Controls.Shapes;
 
 namespace CampuGO;
 
@@ -13,9 +14,10 @@ public partial class MainPage
 				Spacing = 12,
 				Children =
 				{
-					Text("Aucun compte créé", 16, Theme.TextPrimary, true),
-					Text("Créez un compte pour enregistrer votre établissement, votre filière et votre campus sur cet appareil.", 14, Theme.TextSecondary),
-					PrimaryButton("Créer un compte", () => NavigateTo(Screen.Signup))
+					Text("Aucun compte connecté", 16, Theme.TextPrimary, true),
+					Text("Créez un compte ou connectez-vous pour enregistrer votre établissement, votre filière et votre campus.", 14, Theme.TextSecondary),
+					PrimaryButton("Créer un compte", () => NavigateTo(Screen.Signup)),
+					TextButton("Se connecter", () => NavigateTo(Screen.Login), Theme.Accent)
 				}
 			}));
 			return;
@@ -60,11 +62,46 @@ public partial class MainPage
 		if (!string.IsNullOrWhiteSpace(_profile.Phone)) rows.Add(DetailRow("Téléphone", _profile.Phone));
 		PageContent.Children.Add(ListCard(rows));
 
-		PageContent.Children.Add(TextButton("Supprimer le profil de cet appareil", async () =>
+		var online = AppServices.Session.IsAuthenticated;
+		PageContent.Children.Add(Text(
+			online ? "Compte synchronisé avec le serveur." : "Profil enregistré sur cet appareil uniquement.",
+			12, Theme.TextMuted));
+
+		if (online)
 		{
-			var confirmed = await DisplayAlertAsync("Supprimer le profil",
-				"Les informations enregistrées sur cet appareil seront effacées.", "Supprimer", "Annuler");
+			PageContent.Children.Add(TextButton("Se déconnecter", async () =>
+			{
+				await AppServices.Api.LogoutAsync();
+				UserProfile.Clear();
+				_profile = null;
+				_history.Clear();
+				Show(Screen.Home);
+			}, Theme.TextPrimary));
+		}
+
+		PageContent.Children.Add(TextButton(online ? "Supprimer mon compte" : "Supprimer le profil de cet appareil", async () =>
+		{
+			var serverAccount = AppServices.Session.IsAuthenticated;
+			var confirmed = await DisplayAlertAsync(
+				serverAccount ? "Supprimer le compte" : "Supprimer le profil",
+				serverAccount
+					? "Le compte et ses sessions seront supprimés du serveur. Cette action est définitive."
+					: "Les informations enregistrées sur cet appareil seront effacées.",
+				"Supprimer", "Annuler");
 			if (!confirmed) return;
+
+			if (serverAccount)
+			{
+				var result = await AppServices.Api.DeleteAccountAsync();
+				if (!result.IsSuccess)
+				{
+					await DisplayAlertAsync("Suppression impossible",
+						result.IsNetworkError ? "Serveur injoignable. Réessayez lorsque la connexion sera rétablie." : result.Message ?? "Une erreur est survenue.",
+						"Fermer");
+					return;
+				}
+			}
+
 			UserProfile.Clear();
 			_profile = null;
 			Show(Screen.Profile);

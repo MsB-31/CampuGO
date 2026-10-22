@@ -1,4 +1,5 @@
-﻿using Microsoft.Maui.Controls.Shapes;
+﻿using CampuGO.Services;
+using Microsoft.Maui.Controls.Shapes;
 
 namespace CampuGO;
 
@@ -160,8 +161,12 @@ public partial class MainPage
 			return ok;
 		}
 
-		var submit = PrimaryButton("Créer le compte", async () =>
+		var busy = false;
+		Button submit = null!;
+		submit = PrimaryButton("Créer le compte", async () =>
 		{
+			if (busy) return;
+
 			if (!Validate())
 			{
 				summary.Text = "Corrigez les champs signalés pour continuer.";
@@ -170,7 +175,7 @@ public partial class MainPage
 
 			summary.Text = string.Empty;
 			var selectedInstitution = CampusData.Institutions[institution.SelectedIndex];
-			_profile = new UserProfile
+			var draft = new UserProfile
 			{
 				FullName = name.Text!.Trim(),
 				Email = email.Text!.Trim().ToLowerInvariant(),
@@ -180,9 +185,45 @@ public partial class MainPage
 				Level = CampusData.Levels[level.SelectedIndex],
 				Campus = CampusData.Campuses[campus.SelectedIndex]
 			};
-			_profile.Save();
-			await DisplayAlertAsync("Compte créé", $"Bienvenue sur CampuGO, {_profile.FullName}.", "Continuer");
-			Show(Screen.Profile);
+
+			busy = true;
+			submit.IsEnabled = false;
+			submit.Text = "Création du compte…";
+			var result = await AppServices.Api.RegisterAsync(new RegisterPayload(
+				draft.FullName, draft.Email, string.IsNullOrEmpty(draft.Phone) ? null : draft.Phone,
+				draft.Institution, draft.Track, draft.Level, draft.Campus, password.Text!));
+			busy = false;
+			submit.IsEnabled = true;
+			submit.Text = "Créer le compte";
+
+			if (result.IsSuccess && result.Value is { } session)
+			{
+				StoreProfile(session.User);
+				await DisplayAlertAsync("Compte créé", $"Bienvenue sur CampuGO, {session.User.FullName}.", "Continuer");
+				ShowAfterAuth();
+				return;
+			}
+
+			if (result.IsNetworkError)
+			{
+				var offline = await DisplayAlertAsync("Serveur injoignable",
+					"Le compte ne peut pas être créé en ligne pour le moment. Enregistrer le profil sur cet appareil uniquement ?",
+					"Enregistrer ici", "Annuler");
+				if (!offline) return;
+
+				_profile = draft;
+				_profile.Save();
+				ShowAfterAuth();
+				return;
+			}
+
+			if (result.Status == 409)
+			{
+				fEmail.Check(result.Message);
+				return;
+			}
+
+			summary.Text = result.Message ?? "Impossible de créer le compte.";
 		});
 
 		PageContent.Children.Add(FormSection("Identité", fName.Root, fEmail.Root, fPhone.Root));
@@ -195,7 +236,11 @@ public partial class MainPage
 			},
 			fConfirm.Root));
 		PageContent.Children.Add(new VerticalStackLayout { Spacing = 4, Children = { consentRow, errConsent } });
-		PageContent.Children.Add(new VerticalStackLayout { Spacing = 10, Children = { summary, submit } });
+		PageContent.Children.Add(new VerticalStackLayout
+		{
+			Spacing = 10,
+			Children = { summary, submit, TextButton("Déjà un compte ? Se connecter", () => NavigateTo(Screen.Login), Theme.Accent) }
+		});
 	}
 
 	private static View FormSection(string title, params View[] fields)

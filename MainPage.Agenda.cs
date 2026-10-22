@@ -1,11 +1,16 @@
-﻿using Microsoft.Maui.Controls.Shapes;
+﻿using CampuGO.Services;
+using Microsoft.Maui.Controls.Shapes;
 
 namespace CampuGO;
 
 public partial class MainPage
 {
+	private readonly Dictionary<DateOnly, IReadOnlyList<CampusEvent>> _eventsCache = new();
+	private readonly HashSet<DateOnly> _eventsFailed = new();
+
 	private void BuildAgenda()
 	{
+		_eventsFailed.Clear();
 		var days = Enumerable.Range(0, 7).Select(offset => DateTime.Today.AddDays(offset)).ToList();
 		if (_agendaDate.Date < days[0] || _agendaDate.Date > days[^1]) _agendaDate = days[0];
 
@@ -26,11 +31,24 @@ public partial class MainPage
 			list.Children.Clear();
 			list.Children.Add(Text(Cap(_agendaDate.ToString("dddd d MMMM", Fr)), 16, Theme.TextPrimary, true));
 
-			var events = CampusData.EventsOn(_agendaDate);
+			var key = DateOnly.FromDateTime(_agendaDate);
+			var events = _eventsCache.TryGetValue(key, out var cached) ? cached : CampusData.EventsOn(_agendaDate);
 			if (events.Count == 0)
 				list.Children.Add(Text("Aucun événement prévu ce jour.", 14, Theme.TextSecondary));
 			else
 				list.Children.Add(ListCard(events.Select(item => EventRow(item, item.Category))));
+
+			// Programme local affiché d'abord ; celui de l'API le remplace dès qu'il arrive.
+			if (_eventsCache.ContainsKey(key) || _eventsFailed.Contains(key)) return;
+			var requested = _agendaDate;
+			RunInBackground(async () =>
+			{
+				var remote = await AppServices.Data.TryGetEventsAsync(requested);
+				var requestedKey = DateOnly.FromDateTime(requested);
+				if (remote is null) { _eventsFailed.Add(requestedKey); return; }
+				_eventsCache[requestedKey] = remote;
+				if (_current == Screen.Agenda && _agendaDate.Date == requested.Date) Refresh();
+			});
 		}
 
 		var dayRow = new HorizontalStackLayout { Spacing = 8 };

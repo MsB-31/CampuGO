@@ -1,10 +1,11 @@
 ﻿using System.Globalization;
+using CampuGO.Services;
 
 namespace CampuGO;
 
 public partial class MainPage : ContentPage
 {
-	private enum Screen { Home, Explore, Agenda, Alerts, Profile, Signup }
+	private enum Screen { Home, Explore, Agenda, Alerts, Profile, Signup, Login }
 
 	private static readonly (Screen Target, string Label, string Icon)[] Tabs =
 	{
@@ -23,14 +24,17 @@ public partial class MainPage : ContentPage
 	private string _exploreFilter = "Tout";
 	private string _exploreQuery = string.Empty;
 	private DateTime _agendaDate = DateTime.Today;
+	private View? _homePhoto;
 
 	public MainPage()
 	{
 		InitializeComponent();
+		ContentScroll.SizeChanged += (_, _) => CenterHomePhoto();
 		BackgroundColor = Theme.Background;
 		BottomBar.BackgroundColor = Theme.Surface;
 		BottomBarLine.Color = Theme.Border;
 		Show(Screen.Home);
+		RunInBackground(AppServices.Session.LoadAsync);
 	}
 
 	// ---------------------------------------------------------------- Navigation
@@ -74,6 +78,7 @@ public partial class MainPage : ContentPage
 			case Screen.Alerts: BuildAlerts(); break;
 			case Screen.Profile: BuildProfile(); break;
 			case Screen.Signup: BuildSignup(); break;
+			case Screen.Login: BuildLogin(); break;
 			default: BuildHome(); break;
 		}
 
@@ -87,6 +92,7 @@ public partial class MainPage : ContentPage
 		Screen.Alerts => "Alertes",
 		Screen.Profile => "Profil",
 		Screen.Signup => "Créer un compte",
+		Screen.Login => "Se connecter",
 		_ => "CampuGO"
 	};
 
@@ -149,7 +155,7 @@ public partial class MainPage : ContentPage
 
 	private void BuildBottomBar()
 	{
-		BottomBar.IsVisible = _current != Screen.Signup;
+		BottomBar.IsVisible = _current is not (Screen.Signup or Screen.Login);
 		BottomNavigation.Children.Clear();
 
 		for (var index = 0; index < Tabs.Length; index++)
